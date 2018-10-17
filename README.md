@@ -4,10 +4,38 @@
 
 ## Development
 
+### Machine Setup
+Install the Firebase CLI tools:
+
+```sh
+npm i -g firebase-tools;
+```
+
+### Environment Setup
+Create a file named `.firebaserc` in the root of this repository with the following content:
+
+```json
+{
+  "projects": {
+    "default": "dev-env",
+    "development": "dev-env",
+    "production": "prd-env"
+  }
+}
+```
+
+Replace the `dev-env` and the `prd-env` with the names of the development and production project respsectively.
+
+### Application Setup
 1. Create a `.env` file inside the `./functions` directory
 1. Get your Google API key and paste it inside the `.env` so that the line looks like `GOOGLE_PLACES_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
-1. Run `make setup` from the root of this repository to install dependencies
-1. Run `make start` from the root of this repository to start the application
+1. In the same `.env` file, add another line with `ALLOWED_ORIGINS=http://localhost:3000` where `localhost:3000` is the UI accessing the API
+1. To install dependencies
+  - Run `make setup` from the root of this repository 
+  - OR navigate into `./functions` and run `npm install`
+1. to start the application
+  - Run `make start` from the root of this repository
+  - OR navigate into `./functions` and run `firebase serve`
 1. When done, run `make deploy` from the root of this repository, **confirm you are using a staging project** to avoid whacking the production please
 
 ## Notes

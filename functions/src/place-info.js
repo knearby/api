@@ -6,15 +6,23 @@ const API_KEY = requester.getEnvValue('GOOGLE_PLACES_API_KEY');
 const REQ_HOST = 'maps.googleapis.com';
 const REQ_METHOD = 'GET';
 
+const allowedOrigins = (requester.getEnvValue('ALLOWED_ORIGINS') || '').split(',');
+
 module.exports = functions.https.onRequest((request, response) => {
   const {body, headers, method, query} = request;
   const {placeid, session} = query;
 
+  response.status(400);
+  response.header('Content-Type', 'application/json');
+
+  if (allowedOrigins.indexOf(headers.origin) !== -1) {
+    response.header('Access-Control-Allow-Origin', headers.origin);
+    response.send(JSON.stringify('bad request, bad, bad request'));
+    return;
+  }
+
   switch (method) {
     case 'GET':
-      response.status(400);
-      response.header('Content-Type', 'application/json');
-
       // query validation
       if (!placeid) {
         response.send(JSON.stringify({

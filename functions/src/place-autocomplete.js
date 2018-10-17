@@ -7,15 +7,23 @@ const REQ_HOST = 'maps.googleapis.com';
 const REQ_METHOD = 'GET';
 const REQ_COMPONENT = process.env.REQ_COMPONENT || 'country:sg';
 
+const allowedOrigins = (requester.getEnvValue('ALLOWED_ORIGINS') || '').split(',');
+
 module.exports = functions.https.onRequest((request, response) => {
   const {body, headers, method, query} = request;
   const {text, session} = query;
 
+  response.status(400);
+  response.header('Content-Type', 'application/json');
+
+  if (allowedOrigins.indexOf(headers.origin) !== -1) {
+    response.header('Access-Control-Allow-Origin', headers.origin);
+    response.send(JSON.stringify('bad request, bad, bad request'));
+    return;
+  }
+
   switch (method) {
     case 'GET':
-      response.status(400);
-      response.header('Content-Type', 'application/json');
-
       // query validation
       if (!text) {
         response.send(JSON.stringify({
