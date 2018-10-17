@@ -18,6 +18,7 @@ module.exports = functions.https.onRequest((request, response) => {
 
   if (allowedOrigins.indexOf(headers.origin) !== -1) {
     response.header('Access-Control-Allow-Origin', headers.origin);
+  } else {
     response.send(JSON.stringify('bad request, bad, bad request'));
     return;
   }
