@@ -23,7 +23,7 @@ function createPath({
   platform,
   cacheHash,
 }) {
-  return path.join(__dirname, `../cache/${platform}-${id}-${cacheHash}.json`);
+  return path.join(__dirname, `../../cache/${platform}-${id}-${cacheHash}.json`);
 }
 
 /**

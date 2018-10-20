@@ -27,7 +27,7 @@ Create a file named `.firebaserc` in the root of this repository with the follow
 Replace the `dev-env` and the `prd-env` with the names of the development and production project respsectively.
 
 ### Application Setup
-1. Create a `.env` file inside the `./functions` directory
+1. Create a `.env` file at the root directory
 1. Get your Google API key and paste it inside the `.env` so that the line looks like `GOOGLE_PLACES_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
 1. In the same `.env` file, add another line with `ALLOWED_ORIGINS=http://localhost:3000` where `localhost:3000` is the UI accessing the API
 1. To install dependencies
