@@ -2,6 +2,7 @@ const functions = require('firebase-functions');
 
 const utils = require('../utils');
 const requester = require('../utils/requester');
+const validate = require('../utils/validate');
 
 const API_KEY = utils.getEnvValue('GOOGLE_PLACES_API_KEY');
 const REQ_HOST = 'maps.googleapis.com';
