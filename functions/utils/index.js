@@ -6,12 +6,15 @@ module.exports = {
 };
 
 function getEnvValue(keyString) {
-  return (process.env[keyString])
-    ? process.env[keyString]
-    : fs
-    .readFileSync(path.join(__dirname, '../../.env'))
-    .toString()
-    .split('\n')
-    .filter((v) => v.indexOf(keyString) === 0)[0]
-    .split('=')[1];
+  const envFilePath = path.join(__dirname, '../../.env');
+  if (fs.existsSync(envFilePath)) {
+    return fs
+      .readFileSync(envFilePath)
+      .toString()
+      .split('\n')
+      .filter((v) => v.indexOf(keyString) === 0)[0]
+      .split('=')[1];
+  } else {
+    return process.env[keyString];
+  }
 }
