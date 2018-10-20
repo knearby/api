@@ -26,11 +26,12 @@ function QueryValidator(requestQuery) {
 }
 
 QueryValidator.prototype.hasProperties = function(propertyList) {
-  return propertyList.map((propertyThatsSupposedToBeThere) => {
+  propertyList.map((propertyThatsSupposedToBeThere) => {
     if(this.requestQuery[propertyThatsSupposedToBeThere] === undefined) {
       throw new Error(`missing "${propertyThatsSupposedToBeThere}" query parameter`);
     }
   });
+  return this;
 }
 
 function coord(supposedLatOrLng) {

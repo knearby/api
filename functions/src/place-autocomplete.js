@@ -57,13 +57,7 @@ module.exports = functions.https.onRequest((request, response) => {
       }).then((data) => {
         response.status(200);
         response.send(
-          JSON.stringify(data.predictions.map((prediction) => ({
-            description: prediction.description,
-            placeId: prediction.place_id,
-            mainText: prediction.structured_formatting.main_text,
-            secondaryText: prediction.structured_formatting.secondary_text,
-            terms: prediction.terms.map((term) => term.value),
-          })), null, 2)
+          JSON.stringify(serializeResponse(data), null, 2)
         );
         return;
       }).catch((err) => {
@@ -76,3 +70,13 @@ module.exports = functions.https.onRequest((request, response) => {
       response.send(JSON.stringify('nah, can\'t ' + method + ' this shiz.'));
   }
 });
+
+function serializeResponse(data) {
+  return data.predictions.map((prediction) => ({
+    description: prediction.description,
+    placeId: prediction.place_id,
+    mainText: prediction.structured_formatting.main_text,
+    secondaryText: prediction.structured_formatting.secondary_text,
+    terms: prediction.terms.map((term) => term.value),
+  }));
+}
