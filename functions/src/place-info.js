@@ -16,6 +16,7 @@ module.exports = functions.https.onRequest((request, response) => {
 
   try {
     validate.origin(headers.origin);
+    response.header('Access-Control-Allow-Origin', headers.origin);
   } catch ({message}) {
     response.status(403);
     response.send(JSON.stringify({status: 403, message}, null, 2));

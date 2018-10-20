@@ -9,9 +9,7 @@ module.exports = {
 
 function origin(httpOrigin) {
   const allowedOrigins = (utils.getEnvValue('ALLOWED_ORIGINS') || '').split(',');
-  if (allowedOrigins.indexOf(httpOrigin) !== -1) {
-    response.header('Access-Control-Allow-Origin', httpOrigin);
-  } else {
+  if (allowedOrigins.indexOf(httpOrigin) === -1) {
     throw new Error(`seek and ye shall find, o' bad request coming from ${httpOrigin}`);
   }
 }
