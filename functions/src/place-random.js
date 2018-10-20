@@ -3,6 +3,7 @@ const functions = require('firebase-functions');
 const utils = require('../utils');
 const geohasher = require('../utils/geohasher');
 const requester = require('../utils/requester');
+const validate = require('../utils/validate');
 
 const API_KEY = utils.getEnvValue('GOOGLE_PLACES_API_KEY');
 const REQ_HOST = 'maps.googleapis.com';
@@ -12,6 +13,7 @@ const allowedOrigins = (utils.getEnvValue('ALLOWED_ORIGINS') || '').split(',');
 
 module.exports = functions.https.onRequest((request, response) => {
   const {body, headers, method, query} = request;
+  const {lat, lng, text, rad} = query;
   let geohash, latitude, longitude, radius;
 
   response.status(400);
@@ -26,63 +28,22 @@ module.exports = functions.https.onRequest((request, response) => {
 
   switch (method) {
     case 'GET':
-      if (!query.text) {
-        response.send(JSON.stringify({
-          message: 'missing \'text\' query parameter',
-        }));
-        return;
-      } else if (!query.lat) {
-        response.send(JSON.stringify({
-          message: 'missing \'lat\' query parameter',
-        }));
-        return;
-      } else if (!query.lng) {
-        response.send(JSON.stringify({
-          message: 'missing \'lng\' query parameter',
-        }));
-        return;
-      } else if (!query.rad) {
-        response.send(JSON.stringify({
-          message: 'missing \'rad\' query parameter',
-        }));
-        return;
-      }
-
+      // query validation
       try {
-        const {lat, lng} = query;
-        const floatLat = parseFloat(lat);
-        const floatLng = parseFloat(lng);
-        if (isNaN(floatLat)) {
-          throw new Error('Latitude parsing failed - is it a float?');
-        } else if (isNaN(floatLng)) {
-          throw new Error('Longitude parsing failed - is it a float?');
-        }
-        geohash = geohasher.encode({
-          latitude: floatLat,
-          longitude: floatLng,
-        });
-        latitude = floatLat;
-        longitude = floatLng;
-      } catch (ex) {
-        response.send(JSON.stringify({
-          message: 'geohashing failed',
-          data: ex,
-        }));
-        return;
-      }
-
-      try {
-        const {rad} = query;
-        const intRad = parseInt(rad);
-        if (isNaN(intRad)) {
-          throw new Error('Radius parsing failed - is it an integer?');
-        }
-        radius = intRad;
-      } catch (ex) {
-        response.send(JSON.stringify({
-          message: 'radius failed',
-          data: ex,
-        }));
+        validate
+          .query(query, response)
+          .hasProperties([
+            'text',
+            'lat',
+            'lng',
+            'rad'
+          ]);
+        latitude = validate.coord(lat);
+        longitude = validate.coord(lng);
+        geohash = geohasher.encode({latitude, longitude});
+        radius = validate.integer(rad);
+      } catch ({message}) {
+        response.send(JSON.stringify({status: 400, message}, null, 2));
         return;
       }
 
@@ -96,17 +57,17 @@ module.exports = functions.https.onRequest((request, response) => {
           '/maps/api/place/nearbysearch/json?' +
           [
             `key=${API_KEY}`,
-            `keyword=${encodeURIComponent(query.text)}`,
+            `keyword=${encodeURIComponent(text)}`,
             `location=${latitude},${longitude}`,
             `radius=${radius}`
           ].join('&')
       }).then((data) => {
-        response.status(200);
         const randomPlace = data.results[Math.floor(Math.random() * (data.results.length - 1))];
-        console.info(randomPlace);
-        response.send(
-          JSON.stringify(serializeResponse(randomPlace), null, 2)
-        );
+        const responseData = serializeResponse(randomPlace, geohash);
+
+        response.status(200);
+        console.info(`responded with ${randomPlace.name} at ${JSON.stringify(randomPlace.geometry.location)}`);
+        response.send(JSON.stringify(responseData, null, 2));
         return;
       }).catch((err) => {
         console.error(err);
@@ -119,10 +80,11 @@ module.exports = functions.https.onRequest((request, response) => {
   }
 });
 
-function serializeResponse(randomPlace) {
+function serializeResponse(randomPlace, geohash = null) {
   return {
     id: randomPlace['place_id'],
     name: randomPlace.name,
+    geohash,
     rating: randomPlace.rating ? randomPlace.rating : null,
     tags: randomPlace.types ? randomPlace.types : [],
     address: randomPlace.vicinity ? randomPlace.vicinity : null,

@@ -26,14 +26,16 @@ module.exports = functions.https.onRequest((request, response) => {
   switch (method) {
     case 'GET':
       // query validation
-      if (!placeid) {
+      try {
+        validate
+          .query(query, response)
+          .hasProperties([
+            'placeid',
+            'session',
+          ]);
+      } catch(missingParameter) {
         response.send(JSON.stringify({
-          message: 'missing \'placeid\' query parameter',
-        }));
-        return;
-      } else if (!session) {
-        response.send(JSON.stringify({
-          message: 'missing \'session\' query parameter',
+          message: `missing '${missingParameter}' query parameter`,
         }));
         return;
       }
