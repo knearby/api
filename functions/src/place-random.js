@@ -105,13 +105,7 @@ module.exports = functions.https.onRequest((request, response) => {
         const randomPlace = data.results[Math.floor(Math.random() * (data.results.length - 1))];
         console.info(randomPlace);
         response.send(
-          JSON.stringify({
-            id: randomPlace.id,
-            name: randomPlace.name,
-            rating: randomPlace.rating ? randomPlace.rating : null,
-            tags: randomPlace.types ? randomPlace.types : [],
-            address: randomPlace.vicinity ? randomPlace.vicinity : null,
-          }, null, 2)
+          JSON.stringify(serializeResponse(randomPlace), null, 2)
         );
         return;
       }).catch((err) => {
@@ -124,3 +118,16 @@ module.exports = functions.https.onRequest((request, response) => {
       response.send(JSON.stringify('nah, can\'t ' + method + ' this shiz.'));
   }
 });
+
+function serializeResponse(randomPlace) {
+  return {
+    id: randomPlace['place_id'],
+    name: randomPlace.name,
+    rating: randomPlace.rating ? randomPlace.rating : null,
+    tags: randomPlace.types ? randomPlace.types : [],
+    address: randomPlace.vicinity ? randomPlace.vicinity : null,
+    gmapsCode: randomPlace['plus_code']['global_code'],
+    lat: randomPlace.geometry.location.lat,
+    lng: randomPlace.geometry.location.lng,
+  };
+}
