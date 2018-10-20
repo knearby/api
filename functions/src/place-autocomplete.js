@@ -1,13 +1,14 @@
 const functions = require('firebase-functions');
 
+const utils = require('../utils');
 const requester = require('../utils/requester');
 
-const API_KEY = requester.getEnvValue('GOOGLE_PLACES_API_KEY');
+const API_KEY = utils.getEnvValue('GOOGLE_PLACES_API_KEY');
 const REQ_HOST = 'maps.googleapis.com';
 const REQ_METHOD = 'GET';
 const REQ_COMPONENT = process.env.REQ_COMPONENT || 'country:sg';
 
-const allowedOrigins = (requester.getEnvValue('ALLOWED_ORIGINS') || '').split(',');
+const allowedOrigins = (utils.getEnvValue('ALLOWED_ORIGINS') || '').split(',');
 
 module.exports = functions.https.onRequest((request, response) => {
   const {body, headers, method, query} = request;
