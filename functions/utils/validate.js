@@ -1,8 +1,20 @@
+const utils = require('./');
+
 module.exports = {
   coord,
   integer,
+  origin,
   query,
 };
+
+function origin(httpOrigin) {
+  const allowedOrigins = (utils.getEnvValue('ALLOWED_ORIGINS') || '').split(',');
+  if (allowedOrigins.indexOf(httpOrigin) !== -1) {
+    response.header('Access-Control-Allow-Origin', httpOrigin);
+  } else {
+    throw new Error(`seek and ye shall find, o' bad request coming from ${httpOrigin}`);
+  }
+}
 
 function query(requestQuery) {
   return new QueryValidator(requestQuery);
