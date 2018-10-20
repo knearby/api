@@ -10,11 +10,11 @@ const REQ_HOST = 'maps.googleapis.com';
 const REQ_METHOD = 'GET';
 
 module.exports = functions.https.onRequest((request, response) => {
+  console.info(`placeRandom running in environment "${process.env.NODE_ENV}"`);
   const {body, headers, method, query} = request;
   const {lat, lng, text, rad} = query;
   let geohash, latitude, longitude, radius;
 
-  response.status(400);
   response.header('Content-Type', 'application/json');
 
   try {

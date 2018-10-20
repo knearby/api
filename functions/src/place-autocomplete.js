@@ -9,10 +9,10 @@ const REQ_METHOD = 'GET';
 const REQ_COMPONENT = process.env.REQ_COMPONENT || 'country:sg';
 
 module.exports = functions.https.onRequest((request, response) => {
+  console.info(`placeAutocomplete running in environment "${process.env.NODE_ENV}"`);
   const {body, headers, method, query} = request;
   const {text, session} = query;
 
-  response.status(400);
   response.header('Content-Type', 'application/json');
 
   try {
