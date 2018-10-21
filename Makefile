@@ -7,11 +7,11 @@ start: setup
 
 deploy:
 	firebase use development
-	firebase deploy --only functions
+	firebase deploy
 
 deploy.production:
 	firebase use production
-	-firebase deploy --only functions
+	-firebase deploy
 	firebase use development
 
 clean:
