@@ -1,6 +1,7 @@
 const functions = require('firebase-functions');
 
 const utils = require('../utils');
+const cache = require('../utils/cache');
 const requester = require('../utils/requester');
 const validate = require('../utils/validate');
 
@@ -12,6 +13,7 @@ module.exports = functions.https.onRequest((request, response) => {
   console.info(`placeInfo running in environment "${process.env.NODE_ENV}"`);
   const {body, headers, method, query} = request;
   const {placeid, session} = query;
+  let cacheUsed = true;
 
   response.header('Content-Type', 'application/json');
 
@@ -41,28 +43,36 @@ module.exports = functions.https.onRequest((request, response) => {
         return;
       }
 
-      requester.getData({
-        id: 'place-info',
-        hostname: REQ_HOST,
-        method: REQ_METHOD,
-        platform: 'google',
-        useCache: true,
-        uriPath:
-          '/maps/api/place/details/json?' +
-          [
-            `key=${API_KEY}`,
-            `placeid=${placeid}`,
-            `sessiontoken=${encodeURIComponent(session)}`,
-          ].join('&')
-      }).then((data) => {
-        response.status(200);
-        response.send(JSON.stringify(serializeResponse(data), null, 2));
-        return;
-      }).catch((err) => {
-        console.error(err);
-        response.status(500);
-        response.send(JSON.stringify(err));
-      });
+      cache.api.getPlaceInfoCache(placeid)
+        .catch(() => {
+          cacheUsed = false;
+          return requester.getData({
+            id: 'place-info',
+            hostname: REQ_HOST,
+            method: REQ_METHOD,
+            platform: 'google',
+            useCache: true,
+            uriPath:
+              '/maps/api/place/details/json?' +
+              [
+                `key=${API_KEY}`,
+                `placeid=${placeid}`,
+                `sessiontoken=${encodeURIComponent(session)}`,
+              ].join('&')
+          });
+        })
+        .then((data) => {
+          response.status(200);
+          response.send(JSON.stringify(serializeResponse(data), null, 2));
+          if (!cacheUsed) {
+            cache.api.setPlaceAutocompleteCache(text, data);
+          }
+          return;
+        }).catch((err) => {
+          console.error(err);
+          response.status(500);
+          response.send(JSON.stringify(err));
+        });
       break;
     default:
       response.send(JSON.stringify('nah, can\'t ' + method + ' this shiz.'));

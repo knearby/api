@@ -88,7 +88,7 @@ function serializeResponse(randomPlace, geohash = null) {
     rating: randomPlace.rating ? randomPlace.rating : null,
     tags: randomPlace.types ? randomPlace.types : [],
     address: randomPlace.vicinity ? randomPlace.vicinity : null,
-    gmapsCode: randomPlace['plus_code']['global_code'],
+    gmapsCode: randomPlace['plus_code'] ? randomPlace['plus_code']['global_code'] : null,
     lat: randomPlace.geometry.location.lat,
     lng: randomPlace.geometry.location.lng,
   };

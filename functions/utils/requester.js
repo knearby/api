@@ -20,7 +20,7 @@ function getData({
     const cacheOptions = {
       hostname, id, method, platform, uriPath,
     };
-    const cachedData = cache.get(cacheOptions);
+    const cachedData = cache.request.get(cacheOptions);
 
     if (useCache && cachedData !== null ) {
       resolve(cachedData);
@@ -33,7 +33,7 @@ function getData({
         if (err) {
           reject(err);
         } else {
-          cache.set(cacheOptions, data);
+          cache.request.set(cacheOptions, data);
           resolve(data);
         }
       });
