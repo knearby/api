@@ -65,7 +65,7 @@ module.exports = functions.https.onRequest((request, response) => {
           response.status(200);
           response.send(JSON.stringify(serializeResponse(data), null, 2));
           if (!cacheUsed) {
-            cache.api.setPlaceAutocompleteCache(text, data);
+            cache.api.setPlaceInfoCache(placeid, data);
           }
           return;
         }).catch((err) => {
