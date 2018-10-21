@@ -11,7 +11,7 @@ deploy:
 
 deploy.production:
 	firebase use production
-	firebase deploy --only functions
+	-firebase deploy --only functions
 	firebase use development
 
 clean:
