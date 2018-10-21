@@ -31,7 +31,10 @@ function getPlaceAutocompleteCache(searchTerm) {
           }
           return resolve(Object.assign({}, {req: searchTerm, path: ref.path.pieces_.join('/')}, value))
         })
-        .catch(reject);
+        .catch((err) => {
+          console.error(err);
+          reject(err);
+        });
     } catch (ex) {
       reject(ex);
     }
@@ -50,7 +53,10 @@ function setPlaceAutocompleteCache(searchTerm, results) {
     throw new Error('results was not defined or not an object')
   }
   const ref = db.ref(`cache/${setPlaceAutocompleteCache.key}/${searchTerm}`);
-  ref.set(Object.assign({}, results, createBootstrapFields()));
+  ref.set(Object.assign({}, results, createBootstrapFields()))
+    .catch((err) => {
+      console.error(err);
+    });
   return ref.path;
 }
 
@@ -81,7 +87,10 @@ function getPlaceInfoCache(placeId) {
           }
           return resolve(Object.assign({}, {req: placeId, path: ref.path.pieces_.join('/')}, value))
         })
-        .catch(reject);
+        .catch((err) => {
+          console.error(err);
+          reject(err);
+        });
     } catch (ex) {
       reject(ex);
     }
@@ -100,8 +109,10 @@ function setPlaceInfoCache(placeId, results) {
     throw new Error('results was not defined or not an object')
   }
   const ref = db.ref(`cache/${setPlaceInfoCache.key}/${placeId}`);
-  ref.set(
-    Object.assign({}, results, createBootstrapFields()));
+  ref.set(Object.assign({}, results, createBootstrapFields()))
+    .catch((err) => {
+      console.error(err);
+    });
   return ref.path;
 }
 
@@ -131,7 +142,10 @@ function getPlacesCache(geohash) {
           }
           return resolve(Object.assign({}, {req: geohash, path: ref.path.pieces_.join('/')}, value))
         })
-        .catch(reject);
+        .catch((err) => {
+          console.error(err);
+          reject(err);
+        });
     } catch (ex) {
       reject(ex);
     }
