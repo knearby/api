@@ -25,7 +25,16 @@ function getPlaceAutocompleteCache(searchTerm) {
   return new Promise((resolve, reject) => {
     try {
       const ref = db.ref(`cache/${setPlaceAutocompleteCache.key}/${searchTerm}`);
-      ref.once('value').then((snapshot) => resolve(Object.assign({}, {path: ref.path.pieces_.join('/')}, snapshot.val())));
+      ref
+        .once('value')
+        .then((snapshot) => {
+          const value = snapshot.val();
+          if (value === null) {
+            throw new Error('invalid cache key');
+          }
+          return resolve(Object.assign({}, {req: searchTerm, path: ref.path.pieces_.join('/')}, value))
+        })
+        .catch(reject);
     } catch (ex) {
       reject(ex);
     }
@@ -56,7 +65,7 @@ setPlaceAutocompleteCache.description = 'each key in here represents an autocomp
 
 
 /**
- * @param {String} searchTerm
+ * @param {String} placeId
  * @return {Promise<Object>}
  */
 function getPlaceInfoCache(placeId) {
@@ -66,7 +75,16 @@ function getPlaceInfoCache(placeId) {
   return new Promise((resolve, reject) => {
     try {
       const ref = db.ref(`cache/${setPlaceInfoCache.key}/${placeId}`);
-      ref.once('value').then((snapshot) => resolve(Object.assign({}, {path: ref.path.pieces_.join('/')}, snapshot.val())));
+      ref
+        .once('value')
+        .then((snapshot) => {
+          const value = snapshot.val();
+          if (value === null) {
+            throw new Error('invalid cache key');
+          }
+          return resolve(Object.assign({}, {req: placeId, path: ref.path.pieces_.join('/')}, value))
+        })
+        .catch(reject);
     } catch (ex) {
       reject(ex);
     }
@@ -97,7 +115,7 @@ setPlaceInfoCache.description = 'each key in here represents a placeId returned 
 // getPlaceInfoCache('__README').then(console.info);
 
 /**
- * @param {String} searchTerm
+ * @param {String} geohash
  * @return {Promise<Object>}
  */
 function getPlacesCache(geohash) {
@@ -107,7 +125,16 @@ function getPlacesCache(geohash) {
   return new Promise((resolve, reject) => {
     try {
       const ref = db.ref(`cache/${setPlacesCache.key}/${geohash}`);
-      ref.once('value').then((snapshot) => resolve(Object.assign({}, {path: ref.path.pieces_.join('/')}, snapshot.val())));
+      ref
+        .once('value')
+        .then((snapshot) => {
+          const value = snapshot.val();
+          if (value === null) {
+            throw new Error('invalid cache key');
+          }
+          return resolve(Object.assign({}, {req: geohash, path: ref.path.pieces_.join('/')}, value))
+        })
+        .catch(reject);
     } catch (ex) {
       reject(ex);
     }
