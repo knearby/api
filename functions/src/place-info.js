@@ -68,7 +68,9 @@ module.exports = functions.https.onRequest((request, response) => {
             cache.api.setPlaceInfoCache(placeid, data);
           }
           return;
-        }).catch((err) => {
+        })
+        .catch((err) => {
+          console.error('request error follows');
           console.error(err);
           response.status(500);
           response.send(JSON.stringify(err));

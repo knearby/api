@@ -111,6 +111,7 @@ function setPlaceInfoCache(placeId, results) {
   const ref = db.ref(`cache/${setPlaceInfoCache.key}/${placeId}`);
   ref.set(Object.assign({}, results, createBootstrapFields()))
     .catch((err) => {
+      console.error('error setting cache for placeInfo');
       console.error(err);
     });
   return ref.path;
@@ -164,8 +165,7 @@ function setPlacesCache(geohash, results) {
     throw new Error('results was not defined or not an object')
   }
   const ref = db.ref(`cache/${setPlacesCache.key}/${geohash}`);
-  ref.set(
-    Object.assign({}, results, createBootstrapFields()));
+  ref.set(Object.assign({}, results, createBootstrapFields()));
   return ref.path;
 }
 
