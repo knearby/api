@@ -36,7 +36,7 @@ Replace the `dev-env` and the `prd-env` with the names of the development and pr
 1. to start the application
   - Run `make start` from the root of this repository
   - OR navigate into `./functions` and run `firebase serve`
-1. When done, run `make deploy` from the root of this repository, **confirm you are using a staging project** to avoid whacking the production please
+1. When done, run `make deploy` from the root of this repository - this deploys into the development environment
 
 ## Notes
 
