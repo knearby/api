@@ -9,6 +9,14 @@ deploy:
 	firebase use development
 	firebase deploy
 
+deploy.fn:
+	firebase use development
+	firebase deploy --only functions
+
+deploy.db:
+	firebase use development
+	firebase deploy --only database
+
 deploy.production:
 	firebase use production
 	-firebase deploy

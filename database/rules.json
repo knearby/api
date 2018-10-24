@@ -1,6 +1,19 @@
 {
   "rules": {
     ".read": "auth.token.admin === true",
-    ".write": "auth.token.admin === true"
+    ".write": "auth.token.admin === true",
+    "$environment": {
+      "cache": {
+        "gmaps": {
+          "place": {
+            "s": {
+              "$queryText": {
+                ".indexOn": "geohash"
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

@@ -1,6 +1,9 @@
 const firebaseAdmin = require('firebase-admin');
 firebaseAdmin.initializeApp();
 const db = firebaseAdmin.database();
+const geohasher = require('../geohasher');
+
+const API_CACHE_STUB = `${process.env.NODE_ENV}/cache`;
 
 module.exports = {
   getPlaceAutocompleteCache,
@@ -21,7 +24,7 @@ function getPlaceAutocompleteCache(searchTerm) {
   }
   return new Promise((resolve, reject) => {
     try {
-      const ref = db.ref(`cache/${setPlaceAutocompleteCache.key}/${searchTerm}`);
+      const ref = db.ref(`${API_CACHE_STUB}/${setPlaceAutocompleteCache.key}/${searchTerm}`);
       ref
         .once('value')
         .then((snapshot) => {
@@ -52,7 +55,7 @@ function setPlaceAutocompleteCache(searchTerm, results) {
   } else if (!results || typeof results !== 'object') {
     throw new Error('results was not defined or not an object')
   }
-  const ref = db.ref(`cache/${setPlaceAutocompleteCache.key}/${searchTerm}`);
+  const ref = db.ref(`${API_CACHE_STUB}/${setPlaceAutocompleteCache.key}/${searchTerm}`);
   ref.set(Object.assign({}, results, createBootstrapFields()))
     .catch((err) => {
       console.error(err);
@@ -77,7 +80,7 @@ function getPlaceInfoCache(placeId) {
   }
   return new Promise((resolve, reject) => {
     try {
-      const ref = db.ref(`cache/${setPlaceInfoCache.key}/${placeId}`);
+      const ref = db.ref(`${API_CACHE_STUB}/${setPlaceInfoCache.key}/${placeId}`);
       ref
         .once('value')
         .then((snapshot) => {
@@ -108,7 +111,7 @@ function setPlaceInfoCache(placeId, results) {
   } else if (!results || typeof results !== 'object') {
     throw new Error('results was not defined or not an object')
   }
-  const ref = db.ref(`cache/${setPlaceInfoCache.key}/${placeId}`);
+  const ref = db.ref(`${API_CACHE_STUB}/${setPlaceInfoCache.key}/${placeId}`);
   ref.set(Object.assign({}, results, createBootstrapFields()))
     .catch((err) => {
       console.error('error setting cache for placeInfo');
@@ -127,25 +130,37 @@ setPlaceInfoCache.description = 'each key in here represents a placeId returned 
  * @param {String} geohash
  * @return {Promise<Object>}
  */
-function getPlacesCache(geohash) {
-  if (!geohash || typeof geohash !== 'string') {
-    throw new Error('geohash was not defined or not a string');
+function getPlacesCache(queryText, latitude, longitude, radius) {
+  if (!queryText || typeof queryText !== 'string') {
+    throw new Error('queryText was not defined or not a string');
+  } else if (!latitude || typeof latitude !== 'number') {
+    throw new Error('latitude was not defined or not a number');
+  } else if (!longitude || typeof longitude !== 'number') {
+    throw new Error('longitude was not defined or not a number');
+  } else if (typeof radius !== 'number' && isNaN(parseInt(radius))) {
+    throw new Error('radius was not defined or not a number');
   }
   return new Promise((resolve, reject) => {
     try {
-      const ref = db.ref(`cache/${setPlacesCache.key}/${geohash}`);
-      ref
-        .once('value')
-        .then((snapshot) => {
-          const value = snapshot.val();
-          if (value === null) {
-            throw new Error('invalid cache key');
+      const geohash = geohasher.encode({
+        latitude,
+        longitude,
+        precision: geohasher.getRecommendedPrecision(radius) - 1,
+      });
+      db.ref(`${API_CACHE_STUB}/${setPlacesCache.key}/${queryText}`)
+        .orderByChild('geohash')
+        .startAt(`${geohash}0`)
+        .endAt(`${geohash}z`)
+        .on('value', (snapshot) => {
+          const results = snapshot.val();
+          if (!results) {
+            reject(new Error('no results'));
+          } else {
+            console.info(`cache retrieved ${Object.keys(results).length} search results from ${geohash}0 - ${geohash}z`)
+            resolve({
+              results: Object.keys(results).map((resultKey) => results[resultKey]),
+            });
           }
-          return resolve(Object.assign({}, {req: geohash, path: ref.path.pieces_.join('/')}, value))
-        })
-        .catch((err) => {
-          console.error(err);
-          reject(err);
         });
     } catch (ex) {
       reject(ex);
@@ -154,19 +169,33 @@ function getPlacesCache(geohash) {
 }
 
 /**
- * @param {String} geohash 
- * @param {Object} results 
+ * @param {String} queryText
+ * @param {Float} latitude
+ * @param {Float} longitude
+ * @param {Object} data 
  * @return {Object}
  */
-function setPlacesCache(geohash, results) {
-  if (!geohash || typeof geohash !== 'string') {
-    throw new Error('geohash was not defined or not a string');
-  } else if (!results || typeof results !== 'object') {
-    throw new Error('results was not defined or not an object')
+function setPlacesCache(queryText, latitude, longitude, data) {
+  if (!queryText || typeof queryText !== 'string') {
+    throw new Error('queryText was not defined or not a string');
+  } else if (!latitude || typeof latitude !== 'number') {
+    throw new Error('latitude was not defined or not a number');
+  } else if (!longitude || typeof longitude !== 'number') {
+    throw new Error('longitude was not defined or not a number');
+  } else if (!data || typeof data !== 'object') {
+    throw new Error('data was not defined or not an object')
   }
-  const ref = db.ref(`cache/${setPlacesCache.key}/${geohash}`);
-  ref.set(Object.assign({}, results, createBootstrapFields()));
-  return ref.path;
+  const {results} = data;
+  results.forEach((place) => {
+    db.ref(`${API_CACHE_STUB}/${setPlacesCache.key}/${queryText}/${place['place_id']}`)
+      .set(
+        Object.assign(
+          {geohash: geohasher.encode({latitude, longitude, precision: geohasher.precision.street})},
+          place,
+          createBootstrapFields()
+        )
+      );
+  });
 }
 
 setPlacesCache.key = 'gmaps/place/s';

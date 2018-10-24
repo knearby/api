@@ -1,6 +1,7 @@
 const functions = require('firebase-functions');
 
 const utils = require('../utils');
+const cache = require('../utils/cache');
 const geohasher = require('../utils/geohasher');
 const requester = require('../utils/requester');
 const validate = require('../utils/validate');
@@ -13,7 +14,8 @@ module.exports = functions.https.onRequest((request, response) => {
   console.info(`placeRandom running in environment "${process.env.NODE_ENV}"`);
   const {body, headers, method, query} = request;
   const {lat, lng, text, rad} = query;
-  let geohash, latitude, longitude, radius;
+  let geohash, latitude, longitude, radius, precision;
+  let cacheUsed = true;
 
   response.header('Content-Type', 'application/json');
 
@@ -40,40 +42,57 @@ module.exports = functions.https.onRequest((request, response) => {
           ]);
         latitude = validate.coord(lat);
         longitude = validate.coord(lng);
-        geohash = geohasher.encode({latitude, longitude});
         radius = validate.integer(rad);
+        geohash = geohasher.encode({latitude, longitude});
+        precision = geohasher.getRecommendedPrecision(radius);
+        geocache = geohasher.encode({latitude, longitude, precision});
       } catch ({message}) {
         response.send(JSON.stringify({status: 400, message}, null, 2));
         return;
       }
 
-      requester.getData({
-        id: 'get-places',
-        hostname: REQ_HOST,
-        method: REQ_METHOD,
-        platform: 'google',
-        useCache: true,
-        uriPath:
-          '/maps/api/place/nearbysearch/json?' +
-          [
-            `key=${API_KEY}`,
-            `keyword=${encodeURIComponent(text)}`,
-            `location=${latitude},${longitude}`,
-            `radius=${radius}`
-          ].join('&')
-      }).then((data) => {
-        const randomPlace = data.results[Math.floor(Math.random() * (data.results.length - 1))];
-        const responseData = serializeResponse(randomPlace, geohash);
-
-        response.status(200);
-        console.info(`responded with ${randomPlace.name} at ${JSON.stringify(randomPlace.geometry.location)}`);
-        response.send(JSON.stringify(responseData, null, 2));
-        return;
-      }).catch((err) => {
-        console.error(err);
-        response.status(500);
-        response.send(JSON.stringify(err));
-      });
+      cache.api.getPlacesCache(text, latitude, longitude, radius)
+        .then((results) => {
+          if(results.length <= 3) {
+            throw new Error('not enough results! fetch, we must');
+          } else {
+            cacheUsed = true;
+            return results;
+          }
+        }).catch((err) => {
+          console.info(`cache is unavailable... (${err.message}) - fetching real data now!`);
+          cacheUsed = false;
+          return requester.getData({
+            id: 'get-places',
+            hostname: REQ_HOST,
+            method: REQ_METHOD,
+            platform: 'google',
+            useCache: true,
+            uriPath:
+              '/maps/api/place/nearbysearch/json?' +
+              [
+                `key=${API_KEY}`,
+                `keyword=${encodeURIComponent(text)}`,
+                `location=${latitude},${longitude}`,
+                `radius=${radius}`
+              ].join('&')
+          })
+        })
+        .then((data) => {
+          const randomPlace = data.results[Math.floor(Math.random() * (data.results.length - 1))];
+          const responseData = serializeResponse(randomPlace, geohash);
+          response.status(200);
+          console.info(`responded with ${randomPlace.name} at ${JSON.stringify(randomPlace.geometry.location)}`);
+          response.send(JSON.stringify(responseData, null, 2));
+          if (!cacheUsed) {
+            cache.api.setPlacesCache(text, latitude, longitude, data);
+          }
+          return;
+        }).catch((err) => {
+          console.error(err);
+          response.status(500);
+          response.send(JSON.stringify(err));
+        });
       break;
     default:
       response.send(JSON.stringify('nah, can\'t ' + method + ' this shiz.'));

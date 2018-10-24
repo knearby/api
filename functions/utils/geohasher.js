@@ -22,7 +22,27 @@ module.exports = {
   decode,
   encode,
   precision: geohashPrecision,
+  getRecommendedPrecision,
 };
+
+function getRecommendedPrecision(radius) {
+  if (radius < 1) {
+    return geohashPrecision.ruler;
+  } else if (radius < 5) {
+    return geohashPrecision.bus;
+  } else if (radius < 40) {
+    return geohashPrecision.alley;
+  } else if (radius < 1000) {
+    return geohashPrecision.street;
+  } else if (radius < 4800) {
+    return geohashPrecision.park;
+  } else if (radius < 39000) {
+    return geohashPrecision.city;
+  } else if (radius < 600000) {
+    return geohashPrecision.country;
+  }
+  return geohashPrecision.continent;
+}
 
 /**
  * @param {Object} option
@@ -32,7 +52,7 @@ module.exports = {
  * @param {Integer} option.precision
  * @return {Object|String} - if option.debug is truthy, an object is returned, a string otherwise
  */
-function encode({ debug = false, latitude, longitude, precision = geohashPrecision['bus'] } = {}) {
+function encode({ debug = false, latitude, longitude, precision = geohashPrecision['human'] } = {}) {
   // basic setup
   const range = {
     lat: { upper: 90, lower: -90 },

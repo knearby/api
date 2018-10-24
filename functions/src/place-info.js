@@ -103,5 +103,6 @@ function serializeResponse(data) {
     })),
     url: result.url,
     types: result.types,
+    address: result['formatted_address'] ? result['formatted_address'] : null,
   };
 }
