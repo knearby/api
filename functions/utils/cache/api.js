@@ -57,7 +57,12 @@ function setPlaceAutocompleteCache(searchTerm, results) {
   }
   const ref = db.ref(`${API_CACHE_STUB}/${setPlaceAutocompleteCache.key}/${searchTerm}`);
   ref.set(Object.assign({}, results, createBootstrapFields()))
+    .then(() => {
+      console.info(`successfully set cached data for autocomplete query "${searchTerm}"`);
+      return;
+    })
     .catch((err) => {
+      console.error(`error setting cache for autocomplete for text "${searchTerm}"`);
       console.error(err);
     });
   return ref.path;
@@ -113,6 +118,10 @@ function setPlaceInfoCache(placeId, results) {
   }
   const ref = db.ref(`${API_CACHE_STUB}/${setPlaceInfoCache.key}/${placeId}`);
   ref.set(Object.assign({}, results, createBootstrapFields()))
+    .then(() => {
+      console.info(`successfully set cached data for place ${placeId}`);
+      return;
+    })
     .catch((err) => {
       console.error('error setting cache for placeInfo');
       console.error(err);
@@ -194,7 +203,15 @@ function setPlacesCache(queryText, latitude, longitude, data) {
           place,
           createBootstrapFields()
         )
-      );
+      )
+      .then(() => {
+        console.info(`successfully set cached data for place ${place['place_id']}`);
+        return;
+      })
+      .catch((err) => {
+        console.error('error setting cache for place');
+        console.error(err);
+      });
   });
 }
 
